@@ -11,6 +11,7 @@ import org.deeplearning4j.text.sentenceiterator.SentenceIterator;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +23,34 @@ public class Test {
 
     private static void log(String msg){
         System.out.println(msg);
+    }
+
+    private static List<String> processScript(ProcessBuilder builder){
+        try {
+            Process process = builder.start();
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            List<String> lines = new ArrayList<>();
+            String line;
+            while((line = reader.readLine()) != null){
+                lines.add(line);
+            }
+
+            BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            String errorLine;
+            while ((errorLine = errorReader.readLine()) != null) {
+                if (errorLine.contains("error") || errorLine.contains("Exception")) {
+                    log("Error: " + errorLine);
+                } else {
+                    log("Info: " + errorLine);
+                }
+            }
+
+            process.waitFor();
+            return lines;
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static void main(String[] args) throws Exception {
@@ -41,26 +70,8 @@ public class Test {
 
         in = in.toLowerCase();
 
-        ProcessBuilder pb = new ProcessBuilder("python", "nltk_tokenizer.py", in);
-        Process process = pb.start();
-
-        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        String line;
-        while((line = reader.readLine()) != null){
-            in = line;
-        }
-
-        BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-        String errorLine;
-        while ((errorLine = errorReader.readLine()) != null) {
-            if (errorLine.contains("error") || errorLine.contains("Exception")) {
-                log("Error: " + errorLine);
-            } else {
-                log("Info: " + errorLine);
-            }
-        }
-
-        process.waitFor();
+        //TODO: Prone to exception
+        in = processScript(new ProcessBuilder("python", "nltk_stopword.py", in)).get(0);
 
         log(in);
         t.setTokenPreProcessor(new CommonPreprocessor());
