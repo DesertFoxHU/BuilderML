@@ -12,3 +12,6 @@ downside of having to pay for it.
 # Dependencies
 - **Deeplearning4j** [LINK](https://deeplearning4j.konduit.ai/)
 - **Python3 and NLTK**
+
+# How to run
+Run `Test.class`
